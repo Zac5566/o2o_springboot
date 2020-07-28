@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.4//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.o2o.dao.UserShopMapDao">
+    <resultMap id="userShopMapRM" type="UserShopMap">
+        <id property="userShopId" column="user_shop_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="point" column="point"/>
+        <association property="user" column="user_id" javaType="PersonInfo">
+            <id property="userId" column="user_id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="shop" column="shop_id" javaType="Shop">
+            <id property="shopId" column="shop_id"/>
+            <result property="shopName" column="shop_name"/>
+        </association>
+    </resultMap>
+    <select id="queryUserShopMap" resultMap="userShopMapRM">
+        SELECT
+        usm.user_shop_id,
+        usm.create_time,
+        usm.point,
+        s.shop_id,
+        s.shop_name,
+        p.user_id,
+        p.name
+        FROM tb_user_shop_map AS usm
+        LEFT JOIN
+        tb_shop AS s
+        ON usm.shop_id = s.shop_id
+        LEFT JOIN
+        tb_person_info as p
+        ON usm.user_id = p.user_id
+        <where>
+            <if test="userShopMapCondition.shop !=null and userShopMapCondition.shop.shopId != null">
+                and usm.shop_id = #{userShopMapCondition.shop.shopId}
+            </if>
+            <if test="userShopMapCondition.user != null and userShopMapCondition.user.userId != null">
+                and usm.user_id = #{userShopMapCondition.user.userId}
+            </if>
+            <if test="userShopMapCondition.shop != null and userShopMapCondition.shop.shopName !=null">
+                and s.shop_name LIKE CONCAT('%',#{userShopMapCondition.shop.shopName},'%')
+            </if>
+        </where>
+        LIMIT #{rowIndex},#{pageSize}
+    </select>
+    <select id="countUserShopMap" resultType="Integer">
+        SELECT
+        COUNT(1)
+        FROM tb_user_shop_map
+        <where>
+            <if test="userShopMapCondition.shop !=null and userShopMapCondition.shop.shopId != null">
+                and shop_id = #{userShopMapCondition.shop.shopId}
+            </if>
+            <if test="userShopMapCondition.user != null and userShopMapCondition.user.userId != null">
+                and user_id = #{userShopMapCondition.user.userId}
+            </if>
+        </where>
+    </select>
+    <update id="updateUserPoint">
+        UPDATE
+        tb_user_shop_map
+        SET
+        point = #{point},
+        create_time = #{createTime}
+        WHERE
+        user_id = #{user.userId} AND shop_id = #{shop.shopId}
+    </update>
+    <insert id="insertUserPoint">
+        INSERT
+        tb_user_shop_map(user_id,shop_id,create_time,point)
+        VALUES
+        (#{user.userId},#{shop.shopId},#{createTime},#{point})
+    </insert>
+</mapper>

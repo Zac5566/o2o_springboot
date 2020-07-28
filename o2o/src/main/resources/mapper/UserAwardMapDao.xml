@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.4//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.o2o.dao.UserAwardMapDao">
+    <resultMap id="userAwardMapRM" type="UserAwardMap">
+        <id property="userAwardId" column="user_award_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="usedStatus" column="used_status"/>
+        <result property="point" column="point"/>
+        <association property="user" column="user_id" javaType="PersonInfo">
+            <id property="userId" column="user_id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="award" column="award_id" javaType="Award">
+            <id property="awardId" column="award_id"/>
+            <result property="awardName" column="award_name"/>
+        </association>
+        <association property="shop" column="shop_id" javaType="Shop">
+            <id property="shopId" column="shop_id"/>
+            <result property="shopName" column="shop_name"/>
+        </association>
+        <association property="operator" column="" javaType="PersonInfo">
+            <id property="userId" column="user_id"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+    <select id="queryUserAwardMap" resultMap="userAwardMapRM">
+        SELECT
+        uam.user_award_id,
+        uam.create_time,
+        uam.point,
+        p.user_id,
+        p.name,
+        s.shop_id,
+        s.shop_name,
+        op.user_id,
+        op.name,
+        a.award_id,
+        a.award_name
+        FROM
+        tb_user_award_map AS uam
+        LEFT JOIN
+        tb_person_info AS p
+        ON uam.user_id = p.user_id
+        LEFT JOIN
+        tb_shop AS s
+        ON uam.shop_id = s.shop_id
+        LEFT JOIN
+        tb_person_info AS op
+        ON uam.operator_id = op.user_id
+        LEFT JOIN
+        tb_award AS a
+        ON uam.award_id = a.award_id
+        <where>
+            <if test="userAwardMapCondition.user !=null and userAwardMapCondition.user.userId != null">
+                AND uam.user_id = #{userAwardMapCondition.user.userId}
+            </if>
+            <!--顧客姓名模糊查詢-->
+            <if test="userAwardMapCondition.user != null and userAwardMapCondition.user.name != null">
+                AND p.name LIKE CONCAT('%',#{userAwardMapCondition.user.name},'%')
+            </if>
+            <if test="userAwardMapCondition.award !=null and userAwardMapCondition.award.awardId != null">
+                AND uam.award_id = #{userAwardMapCondition.award.awardId}
+            </if>
+            <if test="userAwardMapCondition.award !=null and userAwardMapCondition.award.awardName != null">
+                AND a.award_name LIKE CONCAT('%',#{userAwardMapCondition.award.awardName},'%')
+            </if>
+            <if test="userAwardMapCondition.shop != null and userAwardMapCondition.shop.shopId != null">
+                AND uam.shop_id = #{userAwardMapCondition.shop.shopId}
+            </if>
+            <!--店鋪名稱模糊查詢-->
+            <if test="userAwardMapCondition.shop != null and userAwardMapCondition.shop.shopName != null">
+                AND s.shop_name LIKE CONCAT('%',#{userAwardMapCondition.shop.shopName},'%');
+            </if>
+        </where>
+        ORDER BY uam.create_time DESC
+        LIMIT #{rowIndex},#{pageSize}
+    </select>
+    <select id="countUserAwardMap" resultType="Integer">
+        SELECT
+        COUNT(1)
+        FROM
+        tb_user_award_map AS uam
+        LEFT JOIN
+        tb_person_info AS p
+        ON uam.user_id = p.user_id
+        LEFT JOIN
+        tb_shop AS s
+        ON uam.shop_id = s.shop_id
+        LEFT JOIN
+        tb_person_info AS op
+        ON uam.operator_id = op.user_id
+        <where>
+            <if test="userAwardMapCondition.user !=null and userAwardMapCondition.user.userId != null">
+                AND uam.user_id = #{userAwardMapCondition.user.userId}
+            </if>
+            <!--顧客姓名模糊查詢-->
+            <if test="userAwardMapCondition.user != null and userAwardMapCondition.user.name != null">
+                AND p.name LIKE CONCAT('%',#{userAwardMapCondition.user.name},'%')
+            </if>
+            <if test="userAwardMapCondition.award !=null and userAwardMapCondition.award.awardId != null">
+                AND uam.award_id = #{userAwardMapCondition.award.awardId}
+            </if>
+            <if test="userAwardMapCondition.shop != null and userAwardMapCondition.shop.shopId != null">
+                AND uam.shop_id = #{userAwardMapCondition.shop.shopId}
+            </if>
+            <!--店鋪名稱模糊查詢-->
+            <if test="userAwardMapCondition.shop != null and userAwardMapCondition.shop.shopName != null">
+                AND s.shop_name LIKE CONCAT('%',#{userAwardMapCondition.shop.shopName},'%');
+            </if>
+        </where>
+    </select>
+    <insert id="insertUserRedeemAwardRecord">
+        INSERT tb_user_award_map
+        VALUES (NULL,#{user.userId},#{award.awardId},#{shop.shopId},#{operator.operatorId},#{createTime}
+            ,#{usedStatus},#{point})
+    </insert>
+</mapper>

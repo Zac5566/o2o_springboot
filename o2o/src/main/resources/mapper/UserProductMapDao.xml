@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.4//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.o2o.dao.UserProductMapDao">
+
+    <resultMap id="userProductRM" type="UserProductMap">
+        <id property="userProductId" column="userProduct_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="point" column="point"/>
+        <association property="user" column="user_id">
+            <id property="userId" column="user_id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="operator" column="operator_id">
+            <id property="userId" column="user_id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="product" column="productId">
+            <id property="productId" column="product_id"/>
+            <result property="productName" column="product_name"/>
+        </association>
+        <association property="shop" column="shop_id">
+            <id property="shopId" column="shop_id"/>
+            <result property="shopName" column="shop_name"/>
+        </association>
+    </resultMap>
+    <select id="queryUserProductMapList" resultMap="userProductRM">
+        SELECT
+        upm.user_product_id,
+        upm.create_time,
+        upm.point,
+        buyer.user_id,
+        buyer.name,
+        op.user_id AS op_id,
+        op.name AS op_name,
+        pr.product_id,
+        pr.product_name,
+        s.shop_id,
+        s.shop_name
+        FROM
+        tb_user_product_map AS upm,
+        tb_person_info AS buyer,
+        tb_person_info AS op,
+        tb_product AS pr,
+        tb_shop AS s
+        <where>
+            upm.user_id = buyer.user_id
+            and
+            upm.user_id = op.user_id
+            and
+            upm.product_id = pr.product_id
+            and
+            upm.shop_id = s.shop_id
+            <!--按顧客訊息精準查詢-->
+            <if test="userProductMapCondition.user != null
+            and userProductMapCondition.user.userId != null">
+                and buyer.user_id = #{userProductMapCondition.user.userId}
+            </if>
+            <!--按店鋪訊息精準查詢-->
+            <if test="userProductMapCondition.shop!=null
+            and userProductMapCondition.shop.shopId != null">
+                and upm.shop_id = #{userProductMapCondition.shop.shopId}
+            </if>
+            <!--按客戶名子模糊查詢-->
+            <if test="userProductMapCondition.user != null
+            and userProductMapCondition.user.name != null">
+                and buyer.name LIKE CONCAT('%',#{userProductMapCondition.user.name},'%')
+            </if>
+            <!--按商品名稱模糊查詢-->
+            <if test="userProductMapCondition.product != null
+            and userProductMapCondition.product.productName != null">
+                and pr.product_name LIKE CONCAT('%',#{userProductMapCondition.product.productName },'%')
+            </if>
+            <!--根據消費日期範圍查詢-->
+            <if test="userProductMapCondition.createTime !=null">
+                and upm.create_time > #{userProductMapCondition.createTime}
+            </if>
+        </where>
+        ORDER BY upm.create_time DESC
+        LIMIT #{rowIndex},#{pageSize}
+    </select>
+    <select id="queryProductMapCount" resultType="int">
+        SELECT
+        COUNT(1)
+        FROM
+        tb_user_product_map AS upm,
+        tb_person_info AS buyer,
+        tb_person_info AS op,
+        tb_product AS pr,
+        tb_shop AS s
+        <where>
+            upm.user_id = buyer.user_id
+            and
+            upm.user_id = op.user_id
+            and
+            upm.product_id = pr.product_id
+            and
+            upm.shop_id = s.shop_id
+            <!--按顧客訊息精準查詢-->
+            <if test="userProductMapCondition.user != null
+            and userProductMapCondition.user.userId != null">
+                and buyer.user_id = #{userProductMapCondition.user.userId}
+            </if>
+            <!--按店鋪訊息精準查詢-->
+            <if test="userProductMapCondition.product!=null
+            and userProductMapCondition.product.productId != null">
+                and pr.product_id = #{userProductMapCondition.product.productId}
+            </if>
+            <!--按客戶名子模糊查詢-->
+            <if test="userProductMapCondition.user != null
+            and userProductMapCondition.user.name != null">
+                and buyer.name LIKE CONCAT('%',#{userProductMapCondition.user.name},'%')
+            </if>
+            <!--按商品名稱模糊查詢-->
+            <if test="userProductMapCondition.product != null
+            and userProductMapCondition.product.productName != null">
+                and pr.product_name = CONCAT('%',#{userProductMapCondition.product.productName },'%')
+            </if>
+            <!--根據消費日期範圍查詢-->
+            <if test="userProductMapCondition.createTime !=null">
+                and upm.create_time > #{userProductMapCondition.createTime}
+            </if>
+        </where>
+        ORDER BY upm.create_time DESC
+    </select>
+    <insert id="insertUserProductMap" parameterType="UserProductMap"
+            useGeneratedKeys="true" keyProperty="userProductId">
+        INSERT tb_user_product_map VALUES(NULL,#{user.userId},#{product.productId}
+        ,#{shop.shopId},#{operator.userId},#{createTime},#{point})
+    </insert>
+</mapper>
